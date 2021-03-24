@@ -10,6 +10,7 @@ Please don't look at it unless you are absolutely stuck, even after hours!
 
 # Import math.
 import math
+import itertools
 ################################################################################
 
 """
@@ -73,7 +74,26 @@ The cities should be denoted by their rank (their numbering in adjList).
 def tsp(adjList, start):
     ##### Your implementation goes here. #####
 
-    return tour
+    # DFS
+    openVertices = [start]
+    visited = []
+    
+    for vertex in adjList:
+        vertex.visited = False
+
+    # pop and visit
+    while openVertices:
+        current = openVertices.pop()
+        current.visited = True
+        visited.append(current.rank)
+
+        for adjacent in current.mstN:
+            if not adjacent.visited:
+                openVertices.append(adjacent)
+
+    # close loop
+    visited.append(start.rank)
+    return visited
 
 ################################################################################
 
@@ -412,6 +432,7 @@ class Map:
             ### TODO ###
             # Complete the TSP Approximation method here
             # Update the Map object with the TSP Approximate tour
+            self.tour = tsp(self.adjList, self.start)
         else:
             raise Exception('No MST set!')
         return
@@ -423,8 +444,20 @@ class Map:
         ### TODO ###
         # Complete a brute-force TSP solution!
         # Replace the following two lines with an actual implementation.
-        self.tourOpt = getMap(self.mapNum)[3]
-        return None
+        optLength = -1
+        optTour = None
+        for cities in itertools.permutations(self.adjList):
+            tour = [city.rank for city in cities]
+            tour.append(cities[0].rank) 
+            length = sum([
+                self.adjMat[tour[i]][tour[i+1]] for i in range(len(tour)-2) 
+            ])
+            if optLength < 0 or length < optLength:
+                optLength = length
+                optTour = tour 
+
+        self.tourOpt = optTour
+
 
     """
     clearMap: this function will reset the MST and tour for the map, along with
@@ -736,6 +769,7 @@ def testMSTApprox():
                     print('Test %d: Repeated City in TSP.' % ind)
                     Tflag = True
             if ind == 7:
+                flag_left = False
                 ans = 40030.173592
                 ans2 = 78992.875888
                 if (w < ans - tol) or (w > ans + tol):
